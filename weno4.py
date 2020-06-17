@@ -1,8 +1,9 @@
 import numpy as np
 from numba import njit
 
+__all__ = ['weno4']
 
-@njit
+@njit(cache=True)
 def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=False):
     '''
     One-dimensional interpolation using the fourth-order Weighted Essentially
@@ -228,8 +229,7 @@ def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=Fal
 
     return fs
 
-
-if __name__ == '__main__':
+def test_weno4():
     import matplotlib.pyplot as plt
     from scipy.interpolate import interp1d, PchipInterpolator
     plt.ion()
@@ -279,3 +279,6 @@ if __name__ == '__main__':
     plot_function_test(ax[1, 0], gaussian, xp, methods)
     plot_function_test(ax[1, 1], discontinuous_sine, xp, methods)
     ax[0, 0].legend()
+
+if __name__ == '__main__':
+    test_weno4()

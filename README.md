@@ -16,6 +16,7 @@ Note that this WENO scheme does not enforce monotonicity, and may introduce smal
 
 ## Prerequisites
 
+- python >=3.6
 - numpy (tested on 1.18.2)
 - numba (tested on 0.48 & 0.49)
 
@@ -25,7 +26,9 @@ If you want to run the examples:
 
 ## Installation
 
-For now the code is a single file, with no installation scheme, but will be placed on PyPI soon.
+```
+pip install weno4
+```
 
 ## Reference
 
