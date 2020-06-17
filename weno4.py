@@ -3,7 +3,7 @@ from numba import njit
 
 
 @njit
-def weno4(xs, xp, fp, left=None, right=None, extrapolate=False):
+def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=False):
     '''
     One-dimensional interpolation using the fourth-order Weighted Essentially
     Non-Oscillatory (WENO) scheme detailed in Janett et al (2019)
@@ -20,12 +20,11 @@ def weno4(xs, xp, fp, left=None, right=None, extrapolate=False):
 
     Parameters
     ----------
-    x : array_like
+    xs : array_like
         The x-coordinates at which to compute the interpolant.
 
     xp : 1D array_like
-        The x-coordinates at which the data is defined. Assumed to be
-        _strictly_ monotonically increasing.
+        The x-coordinates at which the data is defined.
 
     fp : 1D array_like
         The values of the interpolated function at the data points `xp`.
@@ -38,16 +37,21 @@ def weno4(xs, xp, fp, left=None, right=None, extrapolate=False):
         Value to use for `x > xp[-1]`, by default `fp[-1]`. Cannot be set
         with `extrapolate=True`
 
-    extrapolate : Optional[bool]
+    extrapolate : bool
         Whether to extrapolate the function outside of `xp` instead of simply
         using the values of `left` and `right`. Extrapolation is performed by
         using the quadratic interpolating function computed for the first and
-        last intervals.
+        last intervals. Default = False.
+
+    assumeSorted : bool
+        If True `xp` and `fp` are assumed to be provided in ordered such that
+        `xp` is _strictly_ monotonically increasing. Otherwise these arrays
+        are first sorted. Default = False.
 
     Returns
     -------
     fs : ndarray
-        The interpolated values, coresponding to each `x`.
+        The interpolated values, coresponding to each `x` in `xs`.
 
     Raises
     ------
@@ -65,6 +69,11 @@ def weno4(xs, xp, fp, left=None, right=None, extrapolate=False):
 
     if xp.ndim != 1:
         raise ValueError('xp and fp must be one-dimensional.')
+
+    if not assumeSorted:
+        order = np.argsort(xp)
+        xp = np.copy(xp[order])
+        fp = np.copy(fp[order])
 
     Ngrid = xp.shape[0]
     Eps = 1e-6
