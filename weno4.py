@@ -2,10 +2,9 @@ import numpy as np
 from numba import njit
 
 __all__ = ['weno4']
-__version__='1.0.0'
+__version__='1.1.0'
 
-@njit(cache=True)
-def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=False):
+def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=False, forceQuadratic=False):
     '''
     One-dimensional interpolation using the fourth-order Weighted Essentially
     Non-Oscillatory (WENO) scheme detailed in Janett et al (2019)
@@ -18,7 +17,9 @@ def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=Fal
     non-oscillatory properties of WENO will not be present here. If this
     behaviour is required throughout the entirety of the input, then
     appropriate boundary conditions need to be determined and applied to data
-    before interpolation.
+    before interpolation. If the data is of length 3 then a single quadratic
+    or linear interpolant is used (depending on the value of
+    `forceQuadratic`), and a linear interpolant if the data is length 2.
 
     Parameters
     ----------
@@ -50,6 +51,9 @@ def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=Fal
         `xp` is _strictly_ monotonically increasing. Otherwise these arrays
         are first sorted. Default = False.
 
+    forceQuadratic : bool
+        If True and `xp` and `fp` are of length 3 then a quadratic interpolant is used. Otherwise a linear interpolant is used. Default = False.
+
     Returns
     -------
     fs : ndarray
@@ -61,6 +65,7 @@ def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=Fal
         If `xp` and `fp` have different shapes
         If `xp` or `fp` are not one-dimensional
         If `extrapolate=True` and a value is set for `left` or `right`
+        If `xp` and `fp` contain fewer than two elements
     '''
     xs = np.asarray(xs)
     xp = np.asarray(xp)
@@ -74,9 +79,19 @@ def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=Fal
 
     if not assumeSorted:
         order = np.argsort(xp)
-        xp = np.copy(xp[order])
-        fp = np.copy(fp[order])
+        xp = np.ascontiguousarray(xp[order])
+        fp = np.ascontiguousarray(fp[order])
 
+    Ngrid = xp.shape[0]
+    if Ngrid < 2:
+        raise ValueError('xp and fp are too short to interpolate.')
+    if Ngrid == 2 or (Ngrid == 3 and not forceQuadratic):
+        return np.interp(xs, xp, fp, left=left, right=right)
+
+    return weno4_impl(xs, xp, fp, left=left, right=right, extrapolate=extrapolate)
+
+@njit(cache=True)
+def weno4_impl(xs, xp, fp, left=None, right=None, extrapolate=False):
     Ngrid = xp.shape[0]
     Eps = 1e-6
     fs = np.zeros_like(xs)

@@ -6,7 +6,7 @@ def readme():
 
 setup(
     name='weno4',
-    version='1.0.0',
+    version='1.1.0',
     description='WENO-4 Interpolation implemented from Janett et al (2019)',
     long_description=readme(),
     long_description_content_type='text/markdown',
