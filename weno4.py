@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 
 __all__ = ['weno4']
-__version__='1.1.0'
+__version__='1.1.1'
 
 def weno4(xs, xp, fp, left=None, right=None, extrapolate=False, assumeSorted=False, forceQuadratic=False):
     '''
